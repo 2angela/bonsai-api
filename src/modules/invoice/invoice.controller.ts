@@ -8,7 +8,8 @@ import {
   UploadedFiles,
   Get,
   Query,
-  Patch, Param,
+  Patch,
+  Param
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { InvoiceService } from './invoice.service';
@@ -64,10 +65,7 @@ export class InvoiceController {
   @ApiOperation({ summary: 'Get Transaction By Invoice' })
   @ApiResponse({ status: 200, description: 'Get Transaction By Invoice' })
   @ApiResponse({ status: 404, description: 'Not Found by Invoice' })
-  async getInvoice(
-    @Query() query: GetInvoiceQueryDto,
-    @Res() res: Response
-  ) {
+  async getInvoice(@Query() query: GetInvoiceQueryDto, @Res() res: Response) {
     const result = await this.invoiceService.getInvoice(query);
 
     if (result.success) {
@@ -88,15 +86,37 @@ export class InvoiceController {
   @Patch('/invoice/:invoiceNumber')
   @ApiOperation({ summary: 'Patch Status By Invoice' })
   @ApiResponse({ status: 200, description: 'Patch Status' })
+  @ApiResponse({ status: 304, description: 'Not Modified' })
+  @ApiResponse({ status: 404, description: 'Not Found' })
   async updateInvoiceStatus(@Param('invoiceNumber') invoiceNumber: string, @Res() res: Response) {
     const result = await this.invoiceService.updateStatus(invoiceNumber);
 
     if (result) {
-      return res.status(HttpStatus.OK).json({
-        success: result.success,
-        message: result.message,
-        results: result.data ?? {}
-      });
+      if (result.success) {
+        return res.status(result.code).json({
+          success: result.success,
+          message: result.message,
+          results: result.data ?? {}
+        });
+      } else if (result.code === HttpStatus.NOT_MODIFIED) {
+        return res.status(HttpStatus.NOT_MODIFIED).json({
+          success: result.success,
+          message: result.message,
+          results: result.data ?? {}
+        });
+      } else if (result.code === HttpStatus.NOT_FOUND) {
+        return res.status(result.code).json({
+          success: result.success,
+          message: result.message,
+          results: result.data ?? {}
+        });
+      }
     }
+
+    return res.status(HttpStatus.BAD_REQUEST).json({
+      success: false,
+      message: 'An unexpected error occurred',
+      results: {}
+    });
   }
 }

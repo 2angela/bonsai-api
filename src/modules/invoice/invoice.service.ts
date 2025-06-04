@@ -154,7 +154,7 @@ export class InvoiceService {
 
     if (!validated || validated.length === 0) {
       return {
-        code: HttpStatus.BAD_REQUEST,
+        code: HttpStatus.NOT_FOUND,
         success: false,
         message: 'Remark not found in collection file_invoice, cannot update invoice status'
       };
@@ -162,44 +162,36 @@ export class InvoiceService {
 
     const updatedResult = await this.invoiceDoc.updateMany({ remark: remark }, { status: 'paid' });
 
-    if (updatedResult.matchedCount === 0) {
-      return {
-        code: HttpStatus.NOT_FOUND,
-        success: false,
-        message: 'No invoices found with the given remark'
-      };
-    }
-
     if (updatedResult.modifiedCount === 0) {
       return {
         code: HttpStatus.NOT_MODIFIED,
         success: false,
         message: 'All invoices already have the status paid'
       };
-    }
+    } else {
+      const updatedInvoices = await this.invoiceDoc
+        .find({ remark: remark, status: 'paid' })
+        .select('invoiceNumber invoiceDate amount status');
 
-    const updatedInvoices = await this.invoiceDoc
-      .find({ remark: remark, status: 'paid' })
-      .select('invoiceNumber invoiceDate amount status');
+      if (updatedResult.modifiedCount > 0) {
+        const data = {
+          totalMatchedInvoices: updatedResult.matchedCount,
+          totalUpdatedInvoices: updatedResult.modifiedCount,
+          updatedInvoices: updatedInvoices.map((invoice) => ({
+            invoiceNumber: invoice.invoiceNumber,
+            invoiceDate: invoice.invoiceDate,
+            amount: invoice.amount,
+            status: invoice.status
+          }))
+        };
 
-    if (updatedResult.modifiedCount > 0) {
-      const data = {
-        totalMatchedInvoices: updatedResult.matchedCount,
-        totalUpdatedInvoices: updatedResult.modifiedCount,
-        updatedInvoices: updatedInvoices.map((invoice) => ({
-          invoiceNumber: invoice.invoiceNumber,
-          invoiceDate: invoice.invoiceDate,
-          amount: invoice.amount,
-          status: invoice.status
-        }))
-      };
-
-      return {
-        code: HttpStatus.OK,
-        success: true,
-        message: `${updatedResult.modifiedCount} invoice(s) updated to paid successfully.`,
-        data: data
-      };
+        return {
+          code: HttpStatus.OK,
+          success: true,
+          message: `${updatedResult.modifiedCount} invoice(s) updated to paid successfully.`,
+          data: data
+        };
+      }
     }
   }
 }
