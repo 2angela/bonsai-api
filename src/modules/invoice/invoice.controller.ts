@@ -63,17 +63,24 @@ export class InvoiceController {
   @Get('/invoice')
   @ApiOperation({ summary: 'Get Transaction By Invoice' })
   @ApiResponse({ status: 200, description: 'Get Transaction By Invoice' })
+  @ApiResponse({ status: 404, description: 'Not Found by Invoice' })
   async getInvoice(
     @Query() query: GetInvoiceQueryDto,
     @Res() res: Response
   ) {
     const result = await this.invoiceService.getInvoice(query);
 
-    if (result) {
+    if (result.success) {
       return res.status(HttpStatus.OK).json({
-        success: true,
-        message: 'Retrieve Invoice was successful',
-        results: result ?? []
+        success: result.success,
+        message: result.message,
+        data: result.data ?? []
+      });
+    } else {
+      return res.status(HttpStatus.NOT_FOUND).json({
+        success: result.success,
+        message: result.message,
+        data: []
       });
     }
   }
@@ -86,7 +93,7 @@ export class InvoiceController {
 
     if (result) {
       return res.status(HttpStatus.OK).json({
-        success: true,
+        success: result.success,
         message: result.message,
         results: result.data ?? {}
       });

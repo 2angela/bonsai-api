@@ -133,28 +133,24 @@ export class InvoiceService {
 
     const trxData = await this.invoiceDoc.find(filter);
 
-    let response = {};
-
-    if (trxData) {
-      response = {
+    if (trxData && trxData.length > 0) {
+      return {
         code: HttpStatus.OK,
         success: true,
         message: 'Success',
         data: trxData
       };
     } else {
-      response = {
+      return {
         code: HttpStatus.NOT_FOUND,
         success: false,
         message: 'No invoice found'
       };
     }
-
-    return response;
   }
 
   public async updateStatus(remark: string) {
-    const validated = await this.fileDoc.find({ remark: { $in: [remark] }});
+    const validated = await this.fileDoc.find({ remark: { $in: [remark] } });
 
     if (!validated || validated.length === 0) {
       return {
