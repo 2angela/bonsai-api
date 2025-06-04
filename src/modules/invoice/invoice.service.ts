@@ -125,7 +125,7 @@ export class InvoiceService {
   public async getInvoice(payload: { remark?: string; status?: string }) {
     const filter: any = {};
 
-    if (payload.remark) {
+    if (payload.remark && payload.remark.length > 0) {
       filter.remark = payload.remark;
     }
 

@@ -63,8 +63,8 @@ export class InvoiceController {
 
   @Get('/invoice')
   @ApiOperation({ summary: 'Get Transaction By Invoice' })
-  @ApiResponse({ status: 200, description: 'Get Transaction By Invoice' })
-  @ApiResponse({ status: 404, description: 'Not Found by Invoice' })
+  @ApiResponse({ status: 200, description: 'Successfully retrieved invoice transactions' })
+  @ApiResponse({ status: 404, description: 'Invoice not found with the provided query' })
   async getInvoice(@Query() query: GetInvoiceQueryDto, @Res() res: Response) {
     const result = await this.invoiceService.getInvoice(query);
 
@@ -85,9 +85,9 @@ export class InvoiceController {
 
   @Patch('/invoice/:invoiceNumber')
   @ApiOperation({ summary: 'Patch Status By Invoice' })
-  @ApiResponse({ status: 200, description: 'Patch Status' })
-  @ApiResponse({ status: 304, description: 'Not Modified' })
-  @ApiResponse({ status: 404, description: 'Not Found' })
+  @ApiResponse({ status: 200, description: 'Successfully updated invoice status' })
+  @ApiResponse({ status: 304, description: 'No changes made, invoice status already "paid"' })
+  @ApiResponse({ status: 404, description: 'Invoice not found' })
   async updateInvoiceStatus(@Param('invoiceNumber') invoiceNumber: string, @Res() res: Response) {
     const result = await this.invoiceService.updateStatus(invoiceNumber);
 
