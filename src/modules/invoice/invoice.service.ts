@@ -121,4 +121,89 @@ export class InvoiceService {
       .filter((char) => !isNaN(Number(char)) && char !== ' ')
       .join('');
   }
+
+  public async getInvoice(payload: { remark?: string; status?: string }) {
+    const filter: any = {};
+
+    if (payload.remark) {
+      filter.remark = payload.remark;
+    }
+
+    filter.status = 'unpaid';
+
+    const trxData = await this.invoiceDoc.find(filter);
+
+    let response = {};
+
+    if (trxData) {
+      response = {
+        code: HttpStatus.OK,
+        success: true,
+        message: 'Success',
+        data: trxData
+      };
+    } else {
+      response = {
+        code: HttpStatus.NOT_FOUND,
+        success: false,
+        message: 'No invoice found'
+      };
+    }
+
+    return response;
+  }
+
+  public async updateStatus(remark: string) {
+    const validated = await this.fileDoc.find({ remark: { $in: [remark] }});
+
+    if (!validated || validated.length === 0) {
+      return {
+        code: HttpStatus.BAD_REQUEST,
+        success: false,
+        message: 'Remark not found in collection file_invoice, cannot update invoice status'
+      };
+    }
+
+    const updatedResult = await this.invoiceDoc.updateMany({ remark: remark }, { status: 'paid' });
+
+    if (updatedResult.matchedCount === 0) {
+      return {
+        code: HttpStatus.NOT_FOUND,
+        success: false,
+        message: 'No invoices found with the given remark'
+      };
+    }
+
+    if (updatedResult.modifiedCount === 0) {
+      return {
+        code: HttpStatus.NOT_MODIFIED,
+        success: false,
+        message: 'All invoices already have the status paid'
+      };
+    }
+
+    const updatedInvoices = await this.invoiceDoc
+      .find({ remark: remark, status: 'paid' })
+      .select('invoiceNumber invoiceDate amount status');
+
+    if (updatedResult.modifiedCount > 0) {
+      const data = {
+        totalMatchedInvoices: updatedResult.matchedCount,
+        totalUpdatedInvoices: updatedResult.modifiedCount,
+        updatedInvoices: updatedInvoices.map((invoice) => ({
+          invoiceNumber: invoice.invoiceNumber,
+          invoiceDate: invoice.invoiceDate,
+          amount: invoice.amount,
+          status: invoice.status
+        }))
+      };
+
+      return {
+        code: HttpStatus.OK,
+        success: true,
+        message: `${updatedResult.modifiedCount} invoice(s) updated to paid successfully.`,
+        data: data
+      };
+    }
+  }
 }

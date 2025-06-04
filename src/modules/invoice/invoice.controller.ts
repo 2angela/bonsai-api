@@ -1,9 +1,21 @@
-import { Controller, Post, Body, UseInterceptors, Res, HttpStatus, UploadedFiles } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseInterceptors,
+  Res,
+  HttpStatus,
+  UploadedFiles,
+  Get,
+  Query,
+  Patch, Param,
+} from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { InvoiceService } from './invoice.service';
 import { Response } from 'express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UploadBodyDto } from '../dtos/upload-body.dto';
+import { GetInvoiceQueryDto } from '../dtos/get-invoice-query.dto';
 
 @ApiTags('Invoice')
 @Controller()
@@ -44,6 +56,39 @@ export class InvoiceController {
         success: true,
         message: 'Batch verification completed',
         results
+      });
+    }
+  }
+
+  @Get('/invoice')
+  @ApiOperation({ summary: 'Get Transaction By Invoice' })
+  @ApiResponse({ status: 200, description: 'Get Transaction By Invoice' })
+  async getInvoice(
+    @Query() query: GetInvoiceQueryDto,
+    @Res() res: Response
+  ) {
+    const result = await this.invoiceService.getInvoice(query);
+
+    if (result) {
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: 'Retrieve Invoice was successful',
+        results: result ?? []
+      });
+    }
+  }
+
+  @Patch('/invoice/:invoiceNumber')
+  @ApiOperation({ summary: 'Patch Status By Invoice' })
+  @ApiResponse({ status: 200, description: 'Patch Status' })
+  async updateInvoiceStatus(@Param('invoiceNumber') invoiceNumber: string, @Res() res: Response) {
+    const result = await this.invoiceService.updateStatus(invoiceNumber);
+
+    if (result) {
+      return res.status(HttpStatus.OK).json({
+        success: true,
+        message: result.message,
+        results: result.data ?? {}
       });
     }
   }
