@@ -17,6 +17,7 @@ import { Response } from 'express';
 import { ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { UploadBodyDto } from '../dtos/upload-body.dto';
 import { GetInvoiceQueryDto } from '../dtos/get-invoice-query.dto';
+import { UpdateInvoiceStatusDto } from '../dtos/update-invoice-status.dto';
 
 @ApiTags('Invoice')
 @Controller()
@@ -83,13 +84,13 @@ export class InvoiceController {
     }
   }
 
-  @Patch('/invoice/:invoiceNumber')
+  @Patch('/invoice')
   @ApiOperation({ summary: 'Patch Status By Invoice' })
   @ApiResponse({ status: 200, description: 'Successfully updated invoice status' })
   @ApiResponse({ status: 304, description: 'No changes made, invoice status already "paid"' })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
-  async updateInvoiceStatus(@Param('invoiceNumber') invoiceNumber: string, @Res() res: Response) {
-    const result = await this.invoiceService.updateStatus(invoiceNumber);
+  async updateInvoiceStatus(@Body() body: UpdateInvoiceStatusDto, @Res() res: Response) {
+    const result = await this.invoiceService.updateStatus(body.remark);
 
     if (result) {
       if (result.success) {
