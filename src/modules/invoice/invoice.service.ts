@@ -149,8 +149,8 @@ export class InvoiceService {
     }
   }
 
-  public async updateStatus(remark: string) {
-    const validated = await this.fileDoc.find({ remark: { $in: [remark] } });
+  public async updateStatus(invoiceNumber: string) {
+    const validated = await this.fileDoc.find({ invoiceNumber: { $in: [invoiceNumber] } });
 
     if (!validated || validated.length === 0) {
       return {
@@ -160,7 +160,7 @@ export class InvoiceService {
       };
     }
 
-    const updatedResult = await this.invoiceDoc.updateMany({ remark: remark }, { status: 'paid' });
+    const updatedResult = await this.invoiceDoc.updateMany({ invoiceNumber: invoiceNumber }, { status: 'paid' });
 
     if (updatedResult.modifiedCount === 0) {
       return {
@@ -170,7 +170,7 @@ export class InvoiceService {
       };
     } else {
       const updatedInvoices = await this.invoiceDoc
-        .find({ remark: remark, status: 'paid' })
+        .find({ invoiceNumber: invoiceNumber, status: 'paid' })
         .select('invoiceNumber invoiceDate amount status');
 
       if (updatedResult.modifiedCount > 0) {

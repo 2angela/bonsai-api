@@ -90,7 +90,7 @@ export class InvoiceController {
   @ApiResponse({ status: 304, description: 'No changes made, invoice status already "paid"' })
   @ApiResponse({ status: 404, description: 'Invoice not found' })
   async updateInvoiceStatus(@Body() body: UpdateInvoiceStatusDto, @Res() res: Response) {
-    const result = await this.invoiceService.updateStatus(body.remark);
+    const result = await this.invoiceService.updateStatus(body.invoiceNumber);
 
     if (result) {
       if (result.success) {

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateInvoiceStatusDto {
-  @ApiProperty({ description: 'Invoice number to update status', default: 'BRIVA13950867057641161CMS PADI UMKM ASDP' })
-  remark: string;
+  @ApiProperty({ description: 'Invoice number to update status', default: '1633136' })
+  invoiceNumber: string;
 }
