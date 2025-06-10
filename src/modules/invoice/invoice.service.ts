@@ -84,7 +84,7 @@ export class InvoiceService {
           amount: invData.amount,
           file_name: payload.file.originalname,
           bank: invData.remark.split('VA')[0],
-          invoiceNumber: invData.invoiceNumber,
+          invoiceNumber: invData.referenceNumber,
           fileUrl: publicUrl,
           invoiceId: invData._id as Types.ObjectId
         };
