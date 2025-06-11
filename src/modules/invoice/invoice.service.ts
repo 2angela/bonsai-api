@@ -53,18 +53,18 @@ export class InvoiceService {
             valueDate = {
               ...valueDate,
               $gte: new Date(payload.startDate)
-            }
+            };
           }
           if (payload.endDate) {
             valueDate = {
               ...valueDate,
               $lte: new Date(payload.endDate).setUTCHours(23, 59, 59, 999)
-            }
+            };
           }
           query = {
             ...query,
             valueDate
-          }
+          };
         }
 
         const invList = await this.invoiceDoc.find(query);
@@ -76,10 +76,13 @@ export class InvoiceService {
           };
         }
 
+        // match amount
         const invDataIndex = invList.findIndex((inv) =>
           detections.some(
             (element: { description: string }, i: number) =>
-              i > 0 && inv.amount.toString() + '00' == this.removeNaN(element.description)
+              i > 0 &&
+              (inv.amount.toString() == this.removeNaN(element.description) ||
+                inv.amount.toString() + '00' == this.removeNaN(element.description))
           )
         );
         if (invDataIndex < 0) {
