@@ -43,13 +43,31 @@ export class InvoiceService {
         const remark = detections[remarkIndex].description;
 
         // find invoices
-        const invList = await this.invoiceDoc.find({
-          remark: { $regex: remark, $options: 'i' },
-          valueDate: {
-            $gte: new Date(payload.startDate),
-            $lte: new Date(payload.endDate).setUTCHours(23, 59, 59, 999)
+        let query: any = {
+          remark: { $regex: remark, $options: 'i' }
+        };
+
+        if (payload.startDate || payload.endDate) {
+          let valueDate: any;
+          if (payload.startDate) {
+            valueDate = {
+              ...valueDate,
+              $gte: new Date(payload.startDate)
+            }
           }
-        });
+          if (payload.endDate) {
+            valueDate = {
+              ...valueDate,
+              $lte: new Date(payload.endDate).setUTCHours(23, 59, 59, 999)
+            }
+          }
+          query = {
+            ...query,
+            valueDate
+          }
+        }
+
+        const invList = await this.invoiceDoc.find(query);
         if (invList.length <= 0) {
           return {
             code: HttpStatus.NOT_FOUND,

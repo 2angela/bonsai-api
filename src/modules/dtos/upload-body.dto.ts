@@ -5,6 +5,7 @@ export class UploadBodyDto {
     description: 'Start date in ISO format (e.g., 2025-06-01)',
     type: 'string',
     example: '2025-06-01',
+    required: false
   })
   startDate: string;
 
@@ -12,6 +13,7 @@ export class UploadBodyDto {
     description: 'End date in ISO format (e.g., 2025-06-30)',
     type: 'string',
     example: '2025-06-30',
+    required: false,
   })
   endDate: string;
 
