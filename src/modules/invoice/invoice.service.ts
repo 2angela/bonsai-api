@@ -171,7 +171,6 @@ export class InvoiceService {
   }
 
   public async updateStatus(referenceNumber: string) {
-    // Cek apakah ada file_upload dengan remark yang sesuai dengan remark dari invoice
     const invoice = await this.invoiceDoc.findOne({ referenceNumber });
 
     if (!invoice) {
@@ -192,7 +191,6 @@ export class InvoiceService {
       };
     }
 
-    // Update status menjadi 'paid'
     const updatedResult = await this.invoiceDoc.updateMany(
       { referenceNumber, status: { $ne: 'paid' } }, // hanya update jika belum 'paid'
       { $set: { status: 'paid' } }
@@ -206,7 +204,6 @@ export class InvoiceService {
       };
     }
 
-    // Ambil kembali invoice yang sudah diupdate
     const updatedInvoices = await this.invoiceDoc
       .find({ referenceNumber, status: 'paid' })
       .select('invoiceNumber invoiceDate amount status referenceNumber');
