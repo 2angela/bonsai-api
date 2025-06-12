@@ -170,8 +170,8 @@ export class InvoiceService {
     }
   }
 
-  public async updateStatus(referenceNumber: string) {
-    const invoice = await this.invoiceDoc.findOne({ referenceNumber });
+  public async updateStatus(invoiceNumber: string) {
+    const invoice = await this.invoiceDoc.findOne({ invoiceNumber });
 
     if (!invoice) {
       return {
@@ -180,6 +180,8 @@ export class InvoiceService {
         message: 'Invoice not found in collection invoice'
       };
     }
+
+    const referenceNumber = invoice.referenceNumber;
 
     const fileMatched = await this.fileDoc.findOne({ remark: invoice.remark });
 
@@ -192,7 +194,7 @@ export class InvoiceService {
     }
 
     const updatedResult = await this.invoiceDoc.updateMany(
-      { referenceNumber, status: { $ne: 'paid' } }, // hanya update jika belum 'paid'
+      { referenceNumber, status: { $ne: 'paid' } },
       { $set: { status: 'paid' } }
     );
 
@@ -217,6 +219,7 @@ export class InvoiceService {
         totalUpdatedInvoices: updatedResult.modifiedCount,
         updatedInvoices: updatedInvoices.map((invoice) => ({
           referenceNumber: invoice.referenceNumber,
+          invoiceNumber: invoice.invoiceNumber,
           invoiceDate: invoice.invoiceDate,
           amount: invoice.amount,
           status: invoice.status
