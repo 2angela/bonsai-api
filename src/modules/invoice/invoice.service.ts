@@ -25,28 +25,7 @@ export class InvoiceService {
       const detections = result.textAnnotations;
 
       if (detections && detections.length > 0) {
-        const remarkIndex = detections.findIndex(
-          (element: { description: string }, i: number) =>
-            i > 0 &&
-            this.removeNaN(element.description).includes(process.env.ACCOUNT_NUMBER!) &&
-            element.description.includes('VA')
-        );
-
-        if (remarkIndex <= 0) {
-          return {
-            code: HttpStatus.NOT_FOUND,
-            success: false,
-            message: 'Invoice not found'
-          };
-        }
-
-        const remark = detections[remarkIndex].description;
-
-        // find invoices
-        let query: any = {
-          remark: { $regex: remark, $options: 'i' }
-        };
-
+        let query: any;
         if (payload.startDate || payload.endDate) {
           let valueDate: any;
           if (payload.startDate) {
@@ -62,13 +41,28 @@ export class InvoiceService {
             };
           }
           query = {
-            ...query,
             valueDate
           };
         }
 
-        const invList = await this.invoiceDoc.find(query);
-        if (invList.length <= 0) {
+        let invList: InvoiceDocument[] = [];
+        let remark = '';
+        for (let i = 0; i < detections.length; i++) {
+          const element = detections[i];
+          // find invoices
+          if (i > 0 && element.description && element.description.includes('INV')) {
+            const inv = this.removeNaN(element.description);
+            invList = await this.invoiceDoc.find({
+              ...query,
+              remark: { $regex: inv, $options: 'i' }
+            });
+            if (invList && invList.length > 0) {
+              remark = element.description;
+            }
+          }
+        }
+
+        if (!remark || invList.length <= 0) {
           return {
             code: HttpStatus.NOT_FOUND,
             success: false,
@@ -85,11 +79,12 @@ export class InvoiceService {
                 inv.amount.toString() + '00' == this.removeNaN(element.description))
           )
         );
+
         if (invDataIndex < 0) {
           return {
             code: HttpStatus.BAD_REQUEST,
             success: false,
-            message: 'No matching invoice was found'
+            message: 'Invoice not found'
           };
         }
 
@@ -105,7 +100,7 @@ export class InvoiceService {
           amount: invData.amount,
           file_name: payload.file.originalname,
           bank: invData.remark.split('VA')[0],
-          invoiceNumber: invData.referenceNumber,
+          referenceNumber: invData.referenceNumber,
           fileUrl: publicUrl,
           invoiceId: invData._id as Types.ObjectId
         };
