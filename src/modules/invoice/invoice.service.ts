@@ -166,17 +166,32 @@ export class InvoiceService {
   }
 
   public async updateStatus(invoiceNumber: string) {
-    const validated = await this.fileDoc.find({ invoiceNumber: { $in: [invoiceNumber] } });
+    const invoice = await this.invoiceDoc.findOne({ invoiceNumber });
 
-    if (!validated || validated.length === 0) {
+    if (!invoice) {
       return {
         code: HttpStatus.NOT_FOUND,
         success: false,
-        message: 'Remark not found in collection file_invoice, cannot update invoice status'
+        message: 'Invoice not found in collection invoice'
       };
     }
 
-    const updatedResult = await this.invoiceDoc.updateMany({ invoiceNumber: invoiceNumber }, { status: 'paid' });
+    const referenceNumber = invoice.referenceNumber;
+
+    const fileMatched = await this.fileDoc.findOne({ remark: invoice.remark });
+
+    if (!fileMatched) {
+      return {
+        code: HttpStatus.NOT_FOUND,
+        success: false,
+        message: 'Remark not found in file_upload, cannot update invoice status'
+      };
+    }
+
+    const updatedResult = await this.invoiceDoc.updateMany(
+      { referenceNumber, status: { $ne: 'paid' } },
+      { $set: { status: 'paid' } }
+    );
 
     if (updatedResult.modifiedCount === 0) {
       return {
@@ -184,30 +199,27 @@ export class InvoiceService {
         success: false,
         message: 'All invoices already have the status paid'
       };
-    } else {
-      const updatedInvoices = await this.invoiceDoc
-        .find({ invoiceNumber: invoiceNumber, status: 'paid' })
-        .select('invoiceNumber invoiceDate amount status');
-
-      if (updatedResult.modifiedCount > 0) {
-        const data = {
-          totalMatchedInvoices: updatedResult.matchedCount,
-          totalUpdatedInvoices: updatedResult.modifiedCount,
-          updatedInvoices: updatedInvoices.map((invoice) => ({
-            invoiceNumber: invoice.invoiceNumber,
-            invoiceDate: invoice.invoiceDate,
-            amount: invoice.amount,
-            status: invoice.status
-          }))
-        };
-
-        return {
-          code: HttpStatus.OK,
-          success: true,
-          message: `${updatedResult.modifiedCount} invoice(s) updated to paid successfully.`,
-          data: data
-        };
-      }
     }
+
+    const updatedInvoices = await this.invoiceDoc
+      .find({ referenceNumber, status: 'paid' })
+      .select('invoiceNumber invoiceDate amount status referenceNumber');
+
+    return {
+      code: HttpStatus.OK,
+      success: true,
+      message: `${updatedResult.modifiedCount} invoice(s) updated to paid successfully.`,
+      data: {
+        totalMatchedInvoices: updatedResult.matchedCount,
+        totalUpdatedInvoices: updatedResult.modifiedCount,
+        updatedInvoices: updatedInvoices.map((invoice) => ({
+          referenceNumber: invoice.referenceNumber,
+          invoiceNumber: invoice.invoiceNumber,
+          invoiceDate: invoice.invoiceDate,
+          amount: invoice.amount,
+          status: invoice.status
+        }))
+      }
+    };
   }
 }
