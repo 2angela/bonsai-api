@@ -207,7 +207,7 @@ export class InvoiceService {
     }
 
     const updatedInvoices = await this.invoiceDoc
-      .find({ referenceNumber, status: 'paid' })
+      .find({ invoiceNumber, status: 'paid' })
       .select('invoiceNumber invoiceDate amount status referenceNumber');
 
     return {
