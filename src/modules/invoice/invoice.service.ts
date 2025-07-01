@@ -50,14 +50,18 @@ export class InvoiceService {
         for (let i = 0; i < detections.length; i++) {
           const element = detections[i];
           // find invoices
-          if (i > 0 && element.description && element.description.includes('INV')) {
-            const inv = this.removeNaN(element.description);
-            invList = await this.invoiceDoc.find({
-              ...query,
-              remark: { $regex: inv, $options: 'i' }
-            });
-            if (invList && invList.length > 0) {
-              remark = element.description;
+          if (i > 0 && element.description) {
+            const inv = element.description;
+            // data length is at least 6 yyyy-mm-dd or yy-mm-dd or yymmdd
+            if (inv.length > 5) {
+              invList = await this.invoiceDoc.find({
+                ...query,
+                remark: { $regex: inv, $options: 'i' }
+              });
+              if (invList && invList.length > 0) {
+                remark = element.description;
+                break;
+              }
             }
           }
         }
@@ -73,10 +77,11 @@ export class InvoiceService {
         // match amount
         const invDataIndex = invList.findIndex((inv) =>
           detections.some(
-            (element: { description: string }, i: number) =>
-              i > 0 &&
+            (element: { description: string }, i: number) => {
+              return i > 0 &&
               (inv.amount.toString() == this.removeNaN(element.description) ||
                 inv.amount.toString() + '00' == this.removeNaN(element.description))
+            }
           )
         );
 
