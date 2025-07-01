@@ -99,7 +99,7 @@ export class InvoiceService {
           remark: invData.remark,
           amount: invData.amount,
           file_name: payload.file.originalname,
-          bank: invData.remark.split('VA')[0],
+          bank: invData.referenceNumber.split('VA')[0],
           referenceNumber: invData.referenceNumber,
           fileUrl: publicUrl,
           invoiceId: invData._id as Types.ObjectId
@@ -188,7 +188,7 @@ export class InvoiceService {
       };
     }
 
-    const updatedResult = await this.invoiceDoc.updateMany(
+    const updatedResult = await this.invoiceDoc.updateOne(
       { referenceNumber, status: { $ne: 'paid' } },
       { $set: { status: 'paid' } }
     );
