@@ -11,7 +11,8 @@ export class InvoiceService {
   constructor(
     @InjectModel(Invoice.name) private invoiceDoc: Model<InvoiceDocument>,
     @InjectModel(FileUploaded.name) private fileDoc: Model<FileDocument>
-  ) {}
+  ) {
+  }
 
   public async verificationFile(payload) {
     try {
@@ -79,8 +80,8 @@ export class InvoiceService {
           detections.some(
             (element: { description: string }, i: number) => {
               return i > 0 &&
-              (inv.amount.toString() == this.removeNaN(element.description) ||
-                inv.amount.toString() + '00' == this.removeNaN(element.description))
+                (inv.amount.toString() == this.removeNaN(element.description) ||
+                  inv.amount.toString() + '00' == this.removeNaN(element.description))
             }
           )
         );
@@ -181,8 +182,6 @@ export class InvoiceService {
       };
     }
 
-    const referenceNumber = invoice.referenceNumber;
-
     const fileMatched = await this.fileDoc.findOne({ remark: invoice.remark });
 
     if (!fileMatched) {
@@ -194,7 +193,7 @@ export class InvoiceService {
     }
 
     const updatedResult = await this.invoiceDoc.updateOne(
-      { referenceNumber, status: { $ne: 'paid' } },
+      { invoiceNumber: invoice.invoiceNumber, status: { $ne: 'paid' } },
       { $set: { status: 'paid' } }
     );
 
@@ -202,13 +201,19 @@ export class InvoiceService {
       return {
         code: HttpStatus.NOT_MODIFIED,
         success: false,
-        message: 'All invoices already have the status paid'
+        message: 'Invoice already has status paid'
       };
     }
 
-    const updatedInvoices = await this.invoiceDoc
-      .find({ invoiceNumber, status: 'paid' })
-      .select('invoiceNumber invoiceDate amount status referenceNumber');
+    const updatedInvoice = await this.invoiceDoc.findOne({ invoiceNumber });
+
+    if (!updatedInvoice) {
+      return {
+        code: HttpStatus.INTERNAL_SERVER_ERROR,
+        success: false,
+        message: 'Invoice updated but could not be retrieved afterwards'
+      };
+    }
 
     return {
       code: HttpStatus.OK,
@@ -217,13 +222,15 @@ export class InvoiceService {
       data: {
         totalMatchedInvoices: updatedResult.matchedCount,
         totalUpdatedInvoices: updatedResult.modifiedCount,
-        updatedInvoices: updatedInvoices.map((invoice) => ({
-          referenceNumber: invoice.referenceNumber,
-          invoiceNumber: invoice.invoiceNumber,
-          invoiceDate: invoice.invoiceDate,
-          amount: invoice.amount,
-          status: invoice.status
-        }))
+        updatedInvoices: [
+          {
+            referenceNumber: updatedInvoice.referenceNumber,
+            invoiceNumber: updatedInvoice.invoiceNumber,
+            invoiceDate: updatedInvoice.invoiceDate,
+            amount: updatedInvoice.amount,
+            status: updatedInvoice.status
+          }
+        ]
       }
     };
   }
